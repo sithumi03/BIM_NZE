@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BIM–FM–BMS Lifecycle Framework</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface2: #1c2330;
+    --border: #2a3441;
+    --text: #e6edf3;
+    --muted: #7d8590;
+    --blue: #4493f8;
+    --teal: #2ea97d;
+    --amber: #d29922;
+    --coral: #e05c3a;
+    --purple: #8b5cf6;
+    --green: #3fb950;
+    --red: #f85149;
+    --blue-bg: #0d2045;
+    --teal-bg: #0a2e23;
+    --amber-bg: #2e1f0a;
+    --coral-bg: #2e1208;
+    --purple-bg: #1a0f3c;
+    --green-bg: #0a2010;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  /* HEADER */
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo { display: flex; align-items: center; gap: 10px; }
+  .logo-dot {
+    width: 10px; height: 10px; border-radius: 50%; background: var(--teal);
+    box-shadow: 0 0 8px var(--teal);
+  }
+  .logo-text { font-weight: 600; font-size: 15px; letter-spacing: -0.3px; }
+  .logo-sub { font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace; }
+  .header-right { display: flex; align-items: center; gap: 8px; }
+  .status-badge {
+    font-size: 11px; font-family: 'DM Mono', monospace;
+    background: var(--teal-bg); color: var(--teal);
+    border: 1px solid var(--teal); border-radius: 4px;
+    padding: 3px 8px;
+  }
+
+  /* LAYOUT */
+  .app { display: flex; height: calc(100vh - 57px); }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 240px; min-width: 240px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    padding: 12px 0;
+  }
+  .sidebar-section { padding: 6px 16px 4px; font-size: 10px; font-family: 'DM Mono', monospace; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+  .phase-btn {
+    width: 100%; text-align: left; background: none; border: none;
+    color: var(--muted); cursor: pointer;
+    padding: 8px 16px; display: flex; align-items: center; gap: 10px;
+    font-family: 'DM Sans', sans-serif; font-size: 13px;
+    transition: all 0.15s; border-left: 2px solid transparent;
+  }
+  .phase-btn:hover { background: var(--surface2); color: var(--text); }
+  .phase-btn.active { color: var(--text); background: var(--surface2); }
+  .phase-btn.active.p1 { border-left-color: var(--blue); }
+  .phase-btn.active.p2 { border-left-color: var(--teal); }
+  .phase-btn.active.p3 { border-left-color: var(--amber); }
+  .phase-btn.active.p4 { border-left-color: var(--coral); }
+  .phase-btn.active.p5 { border-left-color: var(--purple); }
+  .phase-btn.active.pdash { border-left-color: var(--green); }
+  .phase-btn.active.pcheck { border-left-color: var(--blue); }
+  .phase-num {
+    width: 22px; height: 22px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 600; flex-shrink: 0;
+    font-family: 'DM Mono', monospace;
+  }
+  .p1 .phase-num { background: var(--blue-bg); color: var(--blue); }
+  .p2 .phase-num { background: var(--teal-bg); color: var(--teal); }
+  .p3 .phase-num { background: var(--amber-bg); color: var(--amber); }
+  .p4 .phase-num { background: var(--coral-bg); color: var(--coral); }
+  .p5 .phase-num { background: var(--purple-bg); color: var(--purple); }
+  .pdash .phase-num { background: var(--green-bg); color: var(--green); }
+  .pcheck .phase-num { background: var(--blue-bg); color: var(--blue); }
+  .divider { border: none; border-top: 1px solid var(--border); margin: 8px 0; }
+
+  /* MAIN */
+  .main { flex: 1; overflow-y: auto; padding: 24px; }
+
+  /* PANEL */
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* PHASE HEADER */
+  .phase-header {
+    display: flex; align-items: flex-start; gap: 16px;
+    margin-bottom: 24px; padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .phase-icon {
+    width: 48px; height: 48px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; flex-shrink: 0;
+  }
+  .phase-icon.blue { background: var(--blue-bg); }
+  .phase-icon.teal { background: var(--teal-bg); }
+  .phase-icon.amber { background: var(--amber-bg); }
+  .phase-icon.coral { background: var(--coral-bg); }
+  .phase-icon.purple { background: var(--purple-bg); }
+  .phase-icon.green { background: var(--green-bg); }
+  .phase-tag {
+    font-size: 10px; font-family: 'DM Mono', monospace;
+    padding: 2px 6px; border-radius: 3px; display: inline-block; margin-bottom: 4px;
+  }
+  .tag-blue { background: var(--blue-bg); color: var(--blue); }
+  .tag-teal { background: var(--teal-bg); color: var(--teal); }
+  .tag-amber { background: var(--amber-bg); color: var(--amber); }
+  .tag-coral { background: var(--coral-bg); color: var(--coral); }
+  .tag-purple { background: var(--purple-bg); color: var(--purple); }
+  .tag-green { background: var(--green-bg); color: var(--green); }
+  .phase-title { font-size: 20px; font-weight: 600; letter-spacing: -0.4px; margin-bottom: 4px; }
+  .phase-desc { color: var(--muted); font-size: 13px; max-width: 520px; }
+
+  /* CARDS GRID */
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 14px 16px;
+    transition: border-color 0.15s;
+  }
+  .card:hover { border-color: #3a4551; }
+  .card-label {
+    font-size: 10px; font-family: 'DM Mono', monospace;
+    color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px;
+    margin-bottom: 6px;
+  }
+  .card-title { font-size: 14px; font-weight: 500; margin-bottom: 4px; }
+  .card-items { list-style: none; }
+  .card-items li { font-size: 12px; color: var(--muted); padding: 2px 0; display: flex; align-items: center; gap: 6px; }
+  .card-items li::before { content: '›'; color: var(--border); }
+
+  /* CHECKLIST */
+  .checklist-section { margin-bottom: 20px; }
+  .checklist-title { font-size: 13px; font-weight: 500; margin-bottom: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; font-family: 'DM Mono', monospace; }
+  .check-item {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 10px 14px; background: var(--surface);
+    border: 1px solid var(--border); border-radius: 6px;
+    margin-bottom: 6px; cursor: pointer; transition: all 0.15s;
+    user-select: none;
+  }
+  .check-item:hover { border-color: #3a4551; }
+  .check-item.done { opacity: 0.6; }
+  .check-item.done .check-text { text-decoration: line-through; color: var(--muted); }
+  .check-box {
+    width: 18px; height: 18px; border-radius: 4px;
+    border: 1.5px solid var(--border); flex-shrink: 0; margin-top: 1px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+  .check-item.done .check-box { background: var(--teal); border-color: var(--teal); }
+  .check-box svg { display: none; }
+  .check-item.done .check-box svg { display: block; }
+  .check-text { font-size: 13px; }
+  .check-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  /* PROGRESS BAR */
+  .progress-wrap { margin-bottom: 20px; }
+  .progress-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+  .progress-bar { height: 4px; background: var(--surface2); border-radius: 2px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 2px; transition: width 0.3s; }
+  .fill-blue { background: var(--blue); }
+  .fill-teal { background: var(--teal); }
+  .fill-amber { background: var(--amber); }
+  .fill-coral { background: var(--coral); }
+  .fill-purple { background: var(--purple); }
+
+  /* INPUT FORM */
+  .form-row { margin-bottom: 14px; }
+  .form-label { font-size: 11px; font-family: 'DM Mono', monospace; color: var(--muted); margin-bottom: 5px; display: block; text-transform: uppercase; letter-spacing: 0.6px; }
+  .form-input, .form-select, .form-textarea {
+    width: 100%; background: var(--surface); border: 1px solid var(--border);
+    color: var(--text); border-radius: 6px; padding: 8px 12px;
+    font-family: 'DM Sans', sans-serif; font-size: 13px; outline: none;
+    transition: border-color 0.15s;
+  }
+  .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--blue); }
+  .form-textarea { resize: vertical; min-height: 70px; }
+  .form-select option { background: var(--surface); }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .btn {
+    padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer;
+    font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
+    transition: all 0.15s;
+  }
+  .btn-primary { background: var(--teal); color: #fff; }
+  .btn-primary:hover { background: #25936b; }
+  .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { background: #242d3a; }
+  .btn-danger { background: transparent; color: var(--red); border: 1px solid var(--red); font-size: 11px; padding: 4px 8px; }
+  .btn-danger:hover { background: rgba(248,81,73,0.1); }
+
+  /* ASSET TABLE */
+  .table-wrap { overflow-x: auto; margin-bottom: 16px; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  thead tr { border-bottom: 1px solid var(--border); }
+  thead th { padding: 8px 12px; text-align: left; color: var(--muted); font-weight: 500; font-family: 'DM Mono', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
+  tbody tr:hover { background: var(--surface2); }
+  tbody td { padding: 9px 12px; }
+  .pill {
+    font-size: 11px; padding: 2px 8px; border-radius: 12px; font-weight: 500;
+    font-family: 'DM Mono', monospace;
+  }
+  .pill-green { background: var(--green-bg); color: var(--green); }
+  .pill-amber { background: var(--amber-bg); color: var(--amber); }
+  .pill-red { background: rgba(248,81,73,0.1); color: var(--red); }
+  .pill-blue { background: var(--blue-bg); color: var(--blue); }
+  .pill-muted { background: var(--surface2); color: var(--muted); }
+
+  /* DASHBOARD */
+  .dash-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+  .metric-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 14px 16px;
+  }
+  .metric-label { font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace; margin-bottom: 6px; }
+  .metric-value { font-size: 26px; font-weight: 600; letter-spacing: -1px; font-family: 'DM Mono', monospace; }
+  .metric-sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
+  .metric-good { color: var(--green); }
+  .metric-warn { color: var(--amber); }
+  .metric-bad { color: var(--red); }
+  .metric-blue { color: var(--blue); }
+
+  .energy-bar-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-bottom: 12px; }
+  .energy-title { font-size: 12px; font-weight: 500; margin-bottom: 12px; }
+  .e-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .e-label { font-size: 11px; color: var(--muted); width: 100px; flex-shrink: 0; }
+  .e-bar-bg { flex: 1; height: 8px; background: var(--surface2); border-radius: 4px; overflow: hidden; }
+  .e-bar-fill { height: 100%; border-radius: 4px; }
+  .e-pct { font-size: 11px; font-family: 'DM Mono', monospace; width: 36px; text-align: right; flex-shrink: 0; }
+
+  .alert-item {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 10px 14px; border-radius: 6px; margin-bottom: 8px;
+    font-size: 13px;
+  }
+  .alert-warn { background: rgba(210,153,34,0.1); border-left: 3px solid var(--amber); }
+  .alert-danger { background: rgba(248,81,73,0.1); border-left: 3px solid var(--red); }
+  .alert-ok { background: rgba(63,185,80,0.1); border-left: 3px solid var(--green); }
+  .alert-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+  .dot-warn { background: var(--amber); }
+  .dot-danger { background: var(--red); }
+  .dot-ok { background: var(--green); }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+  /* HANDOVER SECTION */
+  .handover-step {
+    display: flex; gap: 14px; padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .h-num {
+    width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 600; font-family: 'DM Mono', monospace;
+  }
+  .h-body { flex: 1; }
+  .h-title { font-size: 13px; font-weight: 500; margin-bottom: 3px; }
+  .h-desc { font-size: 12px; color: var(--muted); }
+  .h-status { margin-top: 6px; }
+
+  /* EMPTY STATE */
+  .empty { text-align: center; padding: 40px 20px; color: var(--muted); font-size: 13px; }
+  .empty-icon { font-size: 32px; margin-bottom: 8px; }
+
+  /* TOAST */
+  .toast {
+    position: fixed; bottom: 24px; right: 24px;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 16px; font-size: 13px;
+    display: flex; align-items: center; gap: 8px;
+    transform: translateY(100px); opacity: 0;
+    transition: all 0.3s; z-index: 999;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--teal); }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  @media (max-width: 700px) {
+    .sidebar { display: none; }
+    .dash-grid { grid-template-columns: 1fr 1fr; }
+    .form-grid { grid-template-columns: 1fr; }
+    .two-col { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">
+    <div class="logo-dot"></div>
+    <div>
+      <div class="logo-text">BIM–FM–BMS Framework</div>
+      <div class="logo-sub">NZE Lifecycle Management Tool</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <span class="status-badge">● ACTIVE</span>
+  </div>
+</div>
+
+<div class="app">
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sidebar-section">Overview</div>
+    <button class="phase-btn pdash active" onclick="show('dash')">
+      <div class="phase-num">⊞</div> Dashboard
+    </button>
+    <hr class="divider">
+    <div class="sidebar-section">Lifecycle Phases</div>
+    <button class="phase-btn p1" onclick="show('p1')">
+      <div class="phase-num">1</div> Pre-design
+    </button>
+    <button class="phase-btn p2" onclick="show('p2')">
+      <div class="phase-num">2</div> Design & Construction
+    </button>
+    <button class="phase-btn p3" onclick="show('p3')">
+      <div class="phase-num">3</div> Handover
+    </button>
+    <button class="phase-btn p4" onclick="show('p4')">
+      <div class="phase-num">4</div> Operations
+    </button>
+    <button class="phase-btn p5" onclick="show('p5')">
+      <div class="phase-num">5</div> Continuous
+    </button>
+    <hr class="divider">
+    <div class="sidebar-section">Tools</div>
+    <button class="phase-btn pcheck" onclick="show('assets')">
+      <div class="phase-num">⊟</div> Asset Register
+    </button>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+
+    <!-- ===== DASHBOARD ===== -->
+    <div class="panel active" id="dash">
+      <div class="phase-header">
+        <div class="phase-icon green" style="font-size:24px;display:flex;align-items:center;justify-content:center;">⬡</div>
+        <div>
+          <div class="phase-tag tag-green">Overview</div>
+          <div class="phase-title">Framework Dashboard</div>
+          <div class="phase-desc">Live status of your BIM–FM–BMS lifecycle implementation across all 5 phases.</div>
+        </div>
+      </div>
+
+      <div class="dash-grid">
+        <div class="metric-card">
+          <div class="metric-label">Framework Progress</div>
+          <div class="metric-value metric-good" id="dash-progress">0%</div>
+          <div class="metric-sub">of all phase tasks</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Assets Registered</div>
+          <div class="metric-value metric-blue" id="dash-assets">0</div>
+          <div class="metric-sub">building assets</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">NZE Performance Gap</div>
+          <div class="metric-value metric-warn" id="dash-gap">—</div>
+          <div class="metric-sub">vs target</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Active Faults</div>
+          <div class="metric-value metric-bad" id="dash-faults">0</div>
+          <div class="metric-sub">BMS alerts</div>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div>
+          <div class="checklist-title">Phase Completion</div>
+          <div id="dash-phases"></div>
+        </div>
+        <div>
+          <div class="checklist-title">Live Alerts</div>
+          <div class="alert-item alert-warn">
+            <div class="alert-dot dot-warn"></div>
+            <div><strong>Phase 3 incomplete</strong><br><span style="color:var(--muted);font-size:12px">BIM handover not signed off. FM team pending.</span></div>
+          </div>
+          <div class="alert-item alert-danger">
+            <div class="alert-dot dot-danger"></div>
+            <div><strong>BHU score low (3.06)</strong><br><span style="color:var(--muted);font-size:12px">BIM handover usability below target. Review data completeness.</span></div>
+          </div>
+          <div class="alert-item alert-ok">
+            <div class="alert-dot dot-ok"></div>
+            <div><strong>GOV score strong (4.06)</strong><br><span style="color:var(--muted);font-size:12px">Governance and accountability rated highest by stakeholders.</span></div>
+          </div>
+          <div class="alert-item alert-warn">
+            <div class="alert-dot dot-warn"></div>
+            <div><strong>HVAC dominates energy</strong><br><span style="color:var(--muted);font-size:12px">HVAC consuming 67% share. Monitor setpoints and fault hours.</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="energy-bar-wrap" style="margin-top:16px">
+        <div class="energy-title">Research construct scores (1–5 scale)</div>
+        <div class="e-row"><div class="e-label">GOV</div><div class="e-bar-bg"><div class="e-bar-fill" style="width:81%;background:var(--purple)"></div></div><div class="e-pct" style="color:var(--purple)">4.06</div></div>
+        <div class="e-row"><div class="e-label">FOD</div><div class="e-bar-bg"><div class="e-bar-fill" style="width:79%;background:var(--teal)"></div></div><div class="e-pct" style="color:var(--teal)">3.97</div></div>
+        <div class="e-row"><div class="e-label">INT</div><div class="e-bar-bg"><div class="e-bar-fill" style="width:79%;background:var(--blue)"></div></div><div class="e-pct" style="color:var(--blue)">3.93</div></div>
+        <div class="e-row"><div class="e-label">FEA</div><div class="e-bar-bg"><div class="e-bar-fill" style="width:77%;background:var(--green)"></div></div><div class="e-pct" style="color:var(--green)">3.84</div></div>
+        <div class="e-row"><div class="e-label">LIC</div><div class="e-bar-bg"><div class="e-bar-fill" style="width:75%;background:var(--amber)"></div></div><div class="e-pct" style="color:var(--amber)">3.73</div></div>
+        <div class="e-row"><div class="e-label">BHU</div><div class="e-bar-bg"><div class="e-bar-fill" style="width:61%;background:var(--red)"></div></div><div class="e-pct" style="color:var(--red)">3.06</div></div>
+      </div>
+    </div>
+
+    <!-- ===== PHASE 1 ===== -->
+    <div class="panel" id="p1">
+      <div class="phase-header">
+        <div class="phase-icon blue">📋</div>
+        <div>
+          <div class="phase-tag tag-blue">Phase 1</div>
+          <div class="phase-title">Pre-design Owner Requirements</div>
+          <div class="phase-desc">Owner defines exactly what data is needed before architects begin. NZE targets, asset data lists, and BMS requirements set from day one.</div>
+        </div>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-label"><span>Phase 1 completion</span><span id="p1-pct">0%</span></div>
+        <div class="progress-bar"><div class="progress-fill fill-blue" id="p1-bar" style="width:0%"></div></div>
+      </div>
+      <div class="cards">
+        <div class="card"><div class="card-label">Asset data list</div><div class="card-title">Define required assets</div><ul class="card-items"><li>AC units — model, capacity, warranty</li><li>Pumps, AHUs, chillers</li><li>Electrical panels & circuits</li><li>Sensors & meters</li></ul></div>
+        <div class="card"><div class="card-label">BMS point list</div><div class="card-title">BMS requirements</div><ul class="card-items"><li>Setpoints for each system</li><li>Alarm conditions & thresholds</li><li>Trend logs (15-min intervals)</li><li>BMS–BIM naming rules</li></ul></div>
+        <div class="card"><div class="card-label">NZE targets</div><div class="card-title">Energy budget</div><ul class="card-items"><li>Annual kWh/m² target</li><li>Sub-metering zones</li><li>HVAC vs lighting split</li><li>Performance gap tolerance</li></ul></div>
+      </div>
+      <div class="checklist-section">
+        <div class="checklist-title">Owner requirements checklist</div>
+        <div id="check-p1">
+          <div class="check-item" onclick="toggle(this,'p1')"><div class="check-box"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div><div class="check-text">Define full asset information requirements (AIR) document</div><div class="check-sub">Covers all M&E systems, finishes, equipment types</div></div></div>
+          <div class="check-item" onclick="toggle(this,'p1')"><div class="check-box"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div><div class="check-text">Set BMS integration requirements with BIM model</div><div class="check-sub">IFC export format, COBie schema, naming conventions</div></div></div>
+          <div class="check-item" onclick="toggle(this,'p1')"><div class="check-box"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div><div class="check-text">Establish NZE energy budget per building zone</div><div class="check-sub">kWh/m²/yr target, HVAC, lighting, plug loads</div></div></div>
+          <div class="check-item" onclick="toggle(this,'p1')"><div class="check-box"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div><div class="check-text">Assign BIM data manager and FM lead at design start</div><div class="check-sub">Named roles with accountability for data quality</div></div></div>
+          <div class="check-item" onclick="toggle(this,'p1')"><div class="check-box"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div><div class="check-text">Document unique ID scheme for all assets</div><div class="check-sub">Consistent across BIM, CMMS, BMS from day one</div></div></div>
+        </div>
+      </div>
+
+      <div class="checklist-title" style="margin-top:20px">Record NZE targets</div>
+      <div class="form-grid">
+        <div class="form-row"><label class="form-label">Building name</label><input class="form-input" id="bld-name" placeholder="e.g. Tower A, Colombo CBD"></div>
+        <div class="form-row"><label class="form-label">NZE target (kWh/m²/yr)</label><input class="form-input" type="number" id="nze-target" placeholder="e.g. 120"></div>
+        <div class="form-row"><label class="form-label">GFA (m²)</label><input class="form-input" type="number" id="gfa" placeholder="e.g. 15000"></div>
+        <div class="form-row"><label class="form-label">Building type</label>
+          <select class="form-select" id="bld-type">
+            <option value="">Select type</option>
+            <option>Office</option><option>Institutional</option><option>Retail</option><option>Mixed-use</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="saveTarget()">Save targets</button>
+    </div>
+
+    <!-- ===== PHASE 2 ===== -->
+    <div class="panel" id="p2">
+      <div class="phase-header">
+        <div class="phase-icon teal">🏗</div>
+        <div>
+          <div class="phase-tag tag-teal">Phase 2</div>
+          <div class="phase-title">Design & Construction BIM</div>
+          <div class="phase-desc">FM-ready BIM model built with persistent unique IDs. Every asset carries its full specification. Same ID used in BIM, FM, and BMS.</div>
+        </div>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-label"><span>Phase 2 completion</span><span id="p2-pct">0%</span></div>
+        <div class="progress-bar"><div class="progress-fill fill-teal" id="p2-bar" style="width:0%"></div></div>
+      </div>
+      <div class="checklist-section">
+        <div class="checklist-title">Design & construction checklist</div>
+        <div id="check-p2">
+          <div class="check-item" onclick="toggle(this,'p2')"><div class="check-box"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div><div class="check-text">BIM model includes FM-required asset properties</div><div class="check-sub">Not just geometry — includes model, serial, spec, location</div></div></div>
+          <div class="check-item" onclick="toggle(this,'p2')"><div class="check-box"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div><div class="check-text">Persistent unique IDs assigned to all M&E assets</div><div class="check-sub">Same ID across BIM, BMS point list, CMMS work orders</div></div></div>
+          <div class="check-item" onclick="toggle(this,'p2')"><div class="check-box"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div><div class="check-text">Commissioning data attached to BIM assets</div><div class="check-sub">Test results, setpoints, performance evidence linked</div></div></div>
+          <div class="check-item" onclick="toggle(this,'p2')"><div class="check-box"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div><div class="check-text">IFC & COBie export validated against FM requirements</div><div class="check-sub">All mandatory fields populated, no null critical values</div></div></div>
+          <div class="check-item" onclick="toggle(this,'p2')"><div class="check-box"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div><div class="check-text">BMS–BIM mapping table created</div><div class="check-sub">Every BMS data point linked to its BIM asset record</div></div></div>
+          <div class="check-item" onclick="toggle(this,'p2')"><div class="check-box"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div><div class="check-text">Sub-metering architecture matches NZE zone plan</div><div class="check-sub">Metering points mapped to zones defined in Phase 1</div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PHASE 3 ===== -->
+    <div class="panel" id="p3">
+      <div class="phase-header">
+        <div class="phase-icon amber">🔍</div>
+        <div>
+          <div class="phase-tag tag-amber">Phase 3</div>
+          <div class="phase-title">Handover Validation</div>
+          <div class="phase-desc">The most critical stage. BIM verified against installed assets. FM team signs off only when data is complete, accurate, and usable. Research found BHU = 3.06 — the weakest link.</div>
+        </div>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-label"><span>Phase 3 completion</span><span id="p3-pct">0%</span></div>
+        <div class="progress-bar"><div class="progress-fill fill-amber" id="p3-bar" style="width:0%"></div></div>
+      </div>
+
+      <div style="margin-bottom:20px">
+        <div class="checklist-title">Handover process steps</div>
+        <div class="handover-step">
+          <div class="h-num" style="background:var(--amber-bg);color:var(--amber)">1</div>
+          <div class="h-body"><div class="h-title">Site verification walk</div><div class="h-desc">FM team physically verifies each BIM asset against installed equipment. Discrepancies logged and resolved before sign-off.</div></div>
+        </div>
+        <div class="handover-step">
+          <div class="h-num" style="background:var(--amber-bg);color:var(--amber)">2</div>
+          <div class="h-body"><div class="h-title">Data completeness audit</div><div class="h-desc">All critical fields checked — no null values, no placeholder data. Asset IDs confirmed consistent in BIM, BMS, and CMMS.</div></div>
+        </div>
+        <div class="handover-step">
+          <div class="h-num" style="background:var(--amber-bg);color:var(--amber)">3</div>
+          <div class="h-body"><div class="h-title">BMS integration test</div><div class="h-desc">Live BMS alarms verified to link to correct BIM asset records. Energy metering tested against sub-meter zones.</div></div>
+        </div>
+        <div class="handover-step">
+          <div class="h-num" style="background:var(--amber-bg);color:var(--amber)">4</div>
+          <div class="h-body"><div class="h-title">FM sign-off</div><div class="h-desc">FM team lead formally accepts BIM handover as performance contract. Not just document delivery — data must be operationally usable.</div></div>
+        </div>
+      </div>
+
+      <div class="checklist-section">
+        <div class="checklist-title">Handover checklist</div>
+        <div id="check-p3">
+          <div class="check-item" onclick="toggle(this,'p3')"><div class="check-box"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div><div class="check-text">Site verification completed — BIM matches installed assets</div></div></div>
+          <div class="check-item" onclick="toggle(this,'p3')"><div class="check-box"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div><div class="check-text">Data completeness audit passed (zero critical nulls)</div></div></div>
+          <div class="check-item" onclick="toggle(this,'p3')"><div class="check-box"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div><div class="check-text">BMS–BIM live integration tested and confirmed</div></div></div>
+          <div class="check-item" onclick="toggle(this,'p3')"><div class="check-box"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div><div class="check-text">FM team trained on BIM data access and update procedures</div></div></div>
+          <div class="check-item" onclick="toggle(this,'p3')"><div class="check-box"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div><div class="check-text">FM lead formal sign-off on performance contract</div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PHASE 4 ===== -->
+    <div class="panel" id="p4">
+      <div class="phase-header">
+        <div class="phase-icon coral">⚡</div>
+        <div>
+          <div class="phase-tag tag-coral">Phase 4</div>
+          <div class="phase-title">Integrated Operations</div>
+          <div class="phase-desc">BIM, FM, and BMS working together. BMS alarms link instantly to BIM asset records. Daily energy tracked against NZE target.</div>
+        </div>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-label"><span>Phase 4 completion</span><span id="p4-pct">0%</span></div>
+        <div class="progress-bar"><div class="progress-fill fill-coral" id="p4-bar" style="width:0%"></div></div>
+      </div>
+
+      <div class="two-col" style="margin-bottom:20px">
+        <div>
+          <div class="checklist-title">Log BMS fault</div>
+          <div class="form-row"><label class="form-label">Asset ID</label><input class="form-input" id="fault-asset" placeholder="e.g. HVAC-AHU-03"></div>
+          <div class="form-row"><label class="form-label">Fault description</label><input class="form-input" id="fault-desc" placeholder="e.g. Supply air temp high"></div>
+          <div class="form-row"><label class="form-label">Severity</label>
+            <select class="form-select" id="fault-sev">
+              <option value="warn">Warning</option>
+              <option value="danger">Critical</option>
+              <option value="info">Information</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" onclick="logFault()">Log fault</button>
+        </div>
+        <div>
+          <div class="checklist-title">Active BMS faults</div>
+          <div id="fault-list"><div class="empty"><div class="empty-icon">✓</div>No active faults</div></div>
+        </div>
+      </div>
+
+      <div class="checklist-section">
+        <div class="checklist-title">Operations checklist</div>
+        <div id="check-p4">
+          <div class="check-item" onclick="toggle(this,'p4')"><div class="check-box"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div><div class="check-text">BMS alarms auto-linked to BIM asset records in CMMS</div></div></div>
+          <div class="check-item" onclick="toggle(this,'p4')"><div class="check-box"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div><div class="check-text">Daily energy monitoring dashboard active vs NZE target</div></div></div>
+          <div class="check-item" onclick="toggle(this,'p4')"><div class="check-box"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div><div class="check-text">HVAC trend logs reviewed weekly (67% energy share)</div></div></div>
+          <div class="check-item" onclick="toggle(this,'p4')"><div class="check-box"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div><div class="check-text">FM work orders include full asset history from BIM</div></div></div>
+          <div class="check-item" onclick="toggle(this,'p4')"><div class="check-box"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div><div class="check-text">Performance gap reported monthly to building owner</div></div></div>
+        </div>
+      </div>
+
+      <div style="margin-top:16px">
+        <div class="checklist-title">Log energy reading</div>
+        <div class="form-grid">
+          <div class="form-row"><label class="form-label">Actual consumption (kWh)</label><input class="form-input" type="number" id="actual-kwh" placeholder="e.g. 18500"></div>
+          <div class="form-row"><label class="form-label">Target (kWh)</label><input class="form-input" type="number" id="target-kwh" placeholder="e.g. 15000"></div>
+        </div>
+        <button class="btn btn-primary" onclick="calcGap()">Calculate NZE gap</button>
+        <div id="gap-result" style="margin-top:12px;font-size:13px;color:var(--muted)"></div>
+      </div>
+    </div>
+
+    <!-- ===== PHASE 5 ===== -->
+    <div class="panel" id="p5">
+      <div class="phase-header">
+        <div class="phase-icon purple">🔄</div>
+        <div>
+          <div class="phase-tag tag-purple">Phase 5</div>
+          <div class="phase-title">Continuous Commissioning</div>
+          <div class="phase-desc">Ongoing drift detection, governed data updates, and regular FM training. The feedback loop that keeps operations on track.</div>
+        </div>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-label"><span>Phase 5 completion</span><span id="p5-pct">0%</span></div>
+        <div class="progress-bar"><div class="progress-fill fill-purple" id="p5-bar" style="width:0%"></div></div>
+      </div>
+      <div class="checklist-section">
+        <div class="checklist-title">Continuous commissioning checklist</div>
+        <div id="check-p5">
+          <div class="check-item" onclick="toggle(this,'p5')"><div class="check-box"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div><div class="check-text">Quarterly drift detection review completed</div><div class="check-sub">Compare actual vs baseline NZE performance metrics</div></div></div>
+          <div class="check-item" onclick="toggle(this,'p5')"><div class="check-box"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div><div class="check-text">BIM data updated for replaced/modified assets</div><div class="check-sub">No stale records — change control process followed</div></div></div>
+          <div class="check-item" onclick="toggle(this,'p5')"><div class="check-box"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div><div class="check-text">Governance roles reviewed — named owners confirmed</div><div class="check-sub">Who updates data, who approves changes, who trains new staff</div></div></div>
+          <div class="check-item" onclick="toggle(this,'p5')"><div class="check-box"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div><div class="check-text">FM team re-training completed (annual)</div><div class="check-sub">BIM access, BMS interpretation, work order procedures</div></div></div>
+          <div class="check-item" onclick="toggle(this,'p5')"><div class="check-box"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div><div class="check-text">Interoperability test — BIM, FM, BMS still fully synced</div><div class="check-sub">No broken links, no orphaned assets, no mapping failures</div></div></div>
+          <div class="check-item" onclick="toggle(this,'p5')"><div class="check-box"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div><div class="check-text">Annual NZE performance report submitted to owner</div><div class="check-sub">Includes gap analysis, fault summary, improvement actions</div></div></div>
+        </div>
+      </div>
+
+      <div style="margin-top:20px">
+        <div class="checklist-title">Add governance note</div>
+        <div class="form-row"><label class="form-label">Role</label><input class="form-input" id="gov-role" placeholder="e.g. BIM Data Manager"></div>
+        <div class="form-row"><label class="form-label">Responsibility</label><textarea class="form-textarea" id="gov-resp" placeholder="e.g. Updates all asset records after M&E changes. Monthly review of BMS-BIM mapping."></textarea></div>
+        <button class="btn btn-primary" onclick="saveGov()">Save role</button>
+        <div id="gov-list" style="margin-top:14px"></div>
+      </div>
+    </div>
+
+    <!-- ===== ASSET REGISTER ===== -->
+    <div class="panel" id="assets">
+      <div class="phase-header">
+        <div class="phase-icon blue">🗃</div>
+        <div>
+          <div class="phase-tag tag-blue">Asset Register</div>
+          <div class="phase-title">Building Asset Register</div>
+          <div class="phase-desc">Log all building assets with their BIM ID, FM status, and BMS link. Every asset needs a persistent unique ID shared across all three systems.</div>
+        </div>
+      </div>
+
+      <div style="margin-bottom:16px">
+        <div class="checklist-title">Add asset</div>
+        <div class="form-grid">
+          <div class="form-row"><label class="form-label">Asset ID</label><input class="form-input" id="a-id" placeholder="e.g. HVAC-AHU-01"></div>
+          <div class="form-row"><label class="form-label">Asset type</label>
+            <select class="form-select" id="a-type">
+              <option>AHU</option><option>Chiller</option><option>FCU</option><option>Pump</option>
+              <option>Electrical Panel</option><option>Sensor</option><option>Meter</option><option>Other</option>
+            </select>
+          </div>
+          <div class="form-row"><label class="form-label">Location / floor</label><input class="form-input" id="a-loc" placeholder="e.g. B1, Level 3"></div>
+          <div class="form-row"><label class="form-label">BIM status</label>
+            <select class="form-select" id="a-bim">
+              <option value="complete">Complete</option>
+              <option value="partial">Partial</option>
+              <option value="missing">Missing</option>
+            </select>
+          </div>
+          <div class="form-row"><label class="form-label">BMS linked</label>
+            <select class="form-select" id="a-bms">
+              <option value="yes">Yes</option>
+              <option value="no">No</option>
+              <option value="pending">Pending</option>
+            </select>
+          </div>
+          <div class="form-row" style="display:flex;align-items:flex-end;">
+            <button class="btn btn-primary" style="width:100%" onclick="addAsset()">Add asset</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Asset ID</th><th>Type</th><th>Location</th><th>BIM data</th><th>BMS linked</th><th>Status</th><th></th>
+          </tr></thead>
+          <tbody id="asset-table">
+            <tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px">No assets registered yet. Add your first asset above.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<div class="toast" id="toast"><div class="toast-dot"></div><span id="toast-msg">Saved</span></div>
+
+<script>
+  // --- STATE ---
+  const state = {
+    checks: { p1: [], p2: [], p3: [], p4: [], p5: [] },
+    assets: [],
+    faults: [],
+    govRoles: [],
+    nzeTarget: null
+  };
+
+  // --- NAVIGATION ---
+  function show(id) {
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.phase-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    const btn = [...document.querySelectorAll('.phase-btn')].find(b => b.getAttribute('onclick').includes("'"+id+"'"));
+    if (btn) btn.classList.add('active');
+    if (id === 'dash') updateDash();
+  }
+
+  // --- CHECKLIST ---
+  function toggle(el, phase) {
+    el.classList.toggle('done');
+    updateProgress(phase);
+    updateDash();
+  }
+
+  function updateProgress(phase) {
+    const items = document.querySelectorAll('#check-' + phase + ' .check-item');
+    const done = document.querySelectorAll('#check-' + phase + ' .check-item.done');
+    const pct = items.length ? Math.round(done.length / items.length * 100) : 0;
+    const el = document.getElementById(phase + '-pct');
+    const bar = document.getElementById(phase + '-bar');
+    if (el) el.textContent = pct + '%';
+    if (bar) bar.style.width = pct + '%';
+    return pct;
+  }
+
+  // --- DASHBOARD ---
+  function updateDash() {
+    let total = 0, done = 0;
+    ['p1','p2','p3','p4','p5'].forEach(p => {
+      const items = document.querySelectorAll('#check-' + p + ' .check-item');
+      const d = document.querySelectorAll('#check-' + p + ' .check-item.done');
+      total += items.length; done += d.length;
+    });
+    const pct = total ? Math.round(done / total * 100) : 0;
+    document.getElementById('dash-progress').textContent = pct + '%';
+    document.getElementById('dash-assets').textContent = state.assets.length;
+    document.getElementById('dash-faults').textContent = state.faults.length;
+
+    const dp = document.getElementById('dash-phases');
+    if (dp) {
+      dp.innerHTML = '';
+      const phases = [
+        {id:'p1', label:'Phase 1 — Pre-design', color:'var(--blue)'},
+        {id:'p2', label:'Phase 2 — Design & Construction', color:'var(--teal)'},
+        {id:'p3', label:'Phase 3 — Handover', color:'var(--amber)'},
+        {id:'p4', label:'Phase 4 — Operations', color:'var(--coral)'},
+        {id:'p5', label:'Phase 5 — Continuous', color:'var(--purple)'},
+      ];
+      phases.forEach(ph => {
+        const items = document.querySelectorAll('#check-' + ph.id + ' .check-item');
+        const d = document.querySelectorAll('#check-' + ph.id + ' .check-item.done');
+        const p = items.length ? Math.round(d.length / items.length * 100) : 0;
+        dp.innerHTML += `
+          <div style="margin-bottom:10px">
+            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
+              <span style="color:var(--muted)">${ph.label}</span>
+              <span style="font-family:'DM Mono',monospace;color:${ph.color}">${p}%</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width:${p}%;background:${ph.color}"></div></div>
+          </div>`;
+      });
+    }
+  }
+
+  // --- ASSETS ---
+  function addAsset() {
+    const id = document.getElementById('a-id').value.trim();
+    if (!id) { showToast('Enter an asset ID'); return; }
+    state.assets.push({
+      id, type: document.getElementById('a-type').value,
+      loc: document.getElementById('a-loc').value,
+      bim: document.getElementById('a-bim').value,
+      bms: document.getElementById('a-bms').value
+    });
+    renderAssets();
+    document.getElementById('a-id').value = '';
+    document.getElementById('a-loc').value = '';
+    updateDash();
+    showToast('Asset added: ' + id);
+  }
+
+  function removeAsset(i) {
+    state.assets.splice(i, 1);
+    renderAssets(); updateDash();
+    showToast('Asset removed');
+  }
+
+  function renderAssets() {
+    const tb = document.getElementById('asset-table');
+    if (!state.assets.length) {
+      tb.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px">No assets registered yet.</td></tr>';
+      return;
+    }
+    const bimPill = {complete:'pill-green',partial:'pill-amber',missing:'pill-red'};
+    const bmsPill = {yes:'pill-green',no:'pill-red',pending:'pill-amber'};
+    tb.innerHTML = state.assets.map((a, i) => `
+      <tr>
+        <td><span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--blue)">${a.id}</span></td>
+        <td>${a.type}</td>
+        <td style="color:var(--muted)">${a.loc || '—'}</td>
+        <td><span class="pill ${bimPill[a.bim]}">${a.bim}</span></td>
+        <td><span class="pill ${bmsPill[a.bms]}">${a.bms}</span></td>
+        <td><span class="pill ${a.bim==='complete' && a.bms==='yes' ? 'pill-green' : 'pill-amber'}">${a.bim==='complete' && a.bms==='yes' ? 'linked' : 'incomplete'}</span></td>
+        <td><button class="btn btn-danger" onclick="removeAsset(${i})">Remove</button></td>
+      </tr>`).join('');
+  }
+
+  // --- FAULTS ---
+  function logFault() {
+    const asset = document.getElementById('fault-asset').value.trim();
+    const desc = document.getElementById('fault-desc').value.trim();
+    if (!asset || !desc) { showToast('Fill in asset ID and description'); return; }
+    const sev = document.getElementById('fault-sev').value;
+    state.faults.push({ asset, desc, sev, time: new Date().toLocaleTimeString() });
+    renderFaults();
+    document.getElementById('fault-asset').value = '';
+    document.getElementById('fault-desc').value = '';
+    updateDash();
+    showToast('Fault logged: ' + asset);
+  }
+
+  function resolveFault(i) {
+    state.faults.splice(i, 1);
+    renderFaults(); updateDash();
+    showToast('Fault resolved');
+  }
+
+  function renderFaults() {
+    const fl = document.getElementById('fault-list');
+    if (!state.faults.length) {
+      fl.innerHTML = '<div class="empty"><div class="empty-icon">✓</div>No active faults</div>';
+      return;
+    }
+    const cls = {warn:'alert-warn', danger:'alert-danger', info:'alert-ok'};
+    const dot = {warn:'dot-warn', danger:'dot-danger', info:'dot-ok'};
+    fl.innerHTML = state.faults.map((f, i) => `
+      <div class="alert-item ${cls[f.sev]}" style="flex-direction:column;gap:6px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="alert-dot ${dot[f.sev]}"></div>
+          <strong style="font-size:12px;font-family:'DM Mono',monospace">${f.asset}</strong>
+          <span style="font-size:11px;color:var(--muted);margin-left:auto">${f.time}</span>
+        </div>
+        <div style="font-size:12px;color:var(--muted);padding-left:16px">${f.desc}</div>
+        <div style="padding-left:16px"><button class="btn btn-secondary" style="font-size:11px;padding:3px 8px" onclick="resolveFault(${i})">Resolve</button></div>
+      </div>`).join('');
+  }
+
+  // --- NZE GAP ---
+  function calcGap() {
+    const actual = parseFloat(document.getElementById('actual-kwh').value);
+    const target = parseFloat(document.getElementById('target-kwh').value);
+    if (!actual || !target) { showToast('Enter both values'); return; }
+    const gap = ((actual - target) / target * 100).toFixed(1);
+    const gapNum = parseFloat(gap);
+    const color = gapNum > 15 ? 'var(--red)' : gapNum > 5 ? 'var(--amber)' : 'var(--green)';
+    const msg = gapNum > 15 ? 'Critical — exceeds target significantly. Review HVAC setpoints and fault hours.' :
+                gapNum > 5 ? 'Warning — above target. Check occupancy patterns and BMS trend logs.' :
+                gapNum > 0 ? 'Acceptable — slight overrun. Monitor seasonally.' : 'On target — NZE performance maintained.';
+    document.getElementById('gap-result').innerHTML = `
+      <div class="alert-item ${gapNum > 5 ? 'alert-warn' : 'alert-ok'}" style="flex-direction:column;gap:4px">
+        <div style="font-size:18px;font-weight:600;font-family:'DM Mono',monospace;color:${color}">${gapNum > 0 ? '+' : ''}${gap}% gap</div>
+        <div style="font-size:12px;color:var(--muted)">${msg}</div>
+      </div>`;
+    document.getElementById('dash-gap').textContent = (gapNum > 0 ? '+' : '') + gap + '%';
+    document.getElementById('dash-gap').className = 'metric-value ' + (gapNum > 15 ? 'metric-bad' : gapNum > 5 ? 'metric-warn' : 'metric-good');
+  }
+
+  // --- GOVERNANCE ---
+  function saveGov() {
+    const role = document.getElementById('gov-role').value.trim();
+    const resp = document.getElementById('gov-resp').value.trim();
+    if (!role) { showToast('Enter a role name'); return; }
+    state.govRoles.push({ role, resp });
+    renderGov();
+    document.getElementById('gov-role').value = '';
+    document.getElementById('gov-resp').value = '';
+    showToast('Role saved: ' + role);
+  }
+
+  function renderGov() {
+    const gl = document.getElementById('gov-list');
+    if (!state.govRoles.length) { gl.innerHTML = ''; return; }
+    gl.innerHTML = state.govRoles.map((g, i) => `
+      <div class="card" style="margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div class="card-title" style="color:var(--purple)">${g.role}</div>
+          <button class="btn btn-danger" onclick="state.govRoles.splice(${i},1);renderGov()">Remove</button>
+        </div>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px">${g.resp || 'No description'}</div>
+      </div>`).join('');
+  }
+
+  // --- SAVE TARGETS ---
+  function saveTarget() {
+    const name = document.getElementById('bld-name').value;
+    const target = document.getElementById('nze-target').value;
+    if (!name || !target) { showToast('Fill in building name and target'); return; }
+    state.nzeTarget = { name, target, gfa: document.getElementById('gfa').value, type: document.getElementById('bld-type').value };
+    showToast('Targets saved for: ' + name);
+  }
+
+  // --- TOAST ---
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    document.getElementById('toast-msg').textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  // --- INIT ---
+  updateDash();
+</script>
+</body>
+</html>
